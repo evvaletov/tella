@@ -130,7 +130,7 @@ html {
   opacity: 0;
 }
 .swiper-slide .s-fade-txt {
-  animation: FadeAni 0.5s ease 1s 1 normal both;
+  /*animation: FadeAni 0.5s ease 1s 1 normal both;*/
 }
 @keyframes FadeAni {
   0% {

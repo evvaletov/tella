@@ -2,18 +2,36 @@
     <div id="overlay">
         <ul class="text-center list-none text-white text-3xl">
             {{ range .Site.Menus.main }}
+            {{ if .HasChildren }}
             <li class="p-2">
-                <a href="{{ .URL | safeURL }}">
+                <a href="{{ .URL | safeURL }}" class="block">
+                    <span>{{ .Name }}</span>
+                    <span class="ml-2">&#9662;</span> <!-- Down arrow for dropdown -->
+                </a>
+                <ul class="hidden mt-2 bg-white text-black">
+                    {{ range .Children }}
+                    <li class="p-2">
+                        <a href="{{ .URL | safeURL }}" class="block">
+                            {{ .Name }}
+                        </a>
+                    </li>
+                    {{ end }}
+                </ul>
+            </li>
+            {{ else }}
+            <li class="p-2">
+                <a href="{{ .URL | safeURL }}" class="block">
                     <span>{{ .Name }}</span>
                 </a>
             </li>
+            {{ end }}
             {{ end }}
         </ul>
     </div>
     <nav class="flex items-center justify-between flex-wrap bg-opacity-100 p-8">
         <div class="flex items-center flex-shrink-0 text-xl text-grey-900 mr-6">
             <a href="{{ .Site.BaseURL }}"><img alt="{{ .Site.Params.logo.alt }}"
-                    class="{{ .Site.Params.logo.size }} mr-3" src="{{ .Site.Params.logo.main | relURL }}"></a>
+                                               class="{{ .Site.Params.logo.size }} mr-3" src="{{ .Site.Params.logo.main | relURL }}"></a>
         </div>
         <div class="block lg:hidden">
             <div id="hamburgerbtn" class="flex cursor-pointer items-center w-14 h-10 py-2 rounded mopen">
@@ -23,15 +41,35 @@
             </div>
         </div>
         <div class="hidden w-full block flex-grow lg:flex lg:items-center lg:w-auto" id="mobileMenu">
-            <div class="text-lg lg:flex-grow">
-            </div>
+            <div class="text-lg lg:flex-grow"></div>
             <div class="text-lg">
-                {{ range .Site.Menus.main }}
-                <a href="{{ .URL | safeURL }}"
-                    class="duration-200 block mt-4 lg:inline-block lg:mt-0 text-black hover:opacity-60 mr-8">
-                    {{ .Name }}
-                </a>
-                {{ end }}
+                <ul class="flex flex-col lg:flex-row list-none mr-auto">
+                    {{ range .Site.Menus.main }}
+                    {{ if .HasChildren }}
+                    <li class="relative group">
+                        <a href="{{ .URL | safeURL }}" class="duration-200 block mt-4 lg:inline-block lg:mt-0 text-black hover:opacity-60 mr-8">
+                            {{ .Name }}
+                            <span class="ml-1">&#9662;</span> <!-- Down arrow for dropdown -->
+                        </a>
+                        <ul class="absolute hidden group-hover:block bg-white shadow-lg mt-2 py-2 w-48">
+                            {{ range .Children }}
+                            <li>
+                                <a href="{{ .URL | safeURL }}" class="block px-4 py-2 text-black hover:bg-gray-100">
+                                    {{ .Name }}
+                                </a>
+                            </li>
+                            {{ end }}
+                        </ul>
+                    </li>
+                    {{ else }}
+                    <li>
+                        <a href="{{ .URL | safeURL }}" class="duration-200 block mt-4 lg:inline-block lg:mt-0 text-black hover:opacity-60 mr-8">
+                            {{ .Name }}
+                        </a>
+                    </li>
+                    {{ end }}
+                    {{ end }}
+                </ul>
             </div>
         </div>
     </nav>

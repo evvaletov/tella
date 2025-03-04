@@ -33,11 +33,10 @@
     <script>
         var mySwiper = new Swiper(".swiper-container", {
             direction: "horizontal",
-            loop: true,
+            loop: false,
+	    autoTouchMove: false,
             speed: 550,
-            autoplay: {
-                delay: 6000,
-            },
+            autoplay: false,
             pagination: {
                 el: ".swiper-pagination",
             },

@@ -1,15 +1,206 @@
-<form name="contact" action="https://getform.io/" method="POST">
-    <div class="input">
-        <input type="text" placeholder="Name" name="name" class="p-4 bg-gray-200 border border-gray-200 focus:outline-none focus:bg-white focus:border-gray-500" required>
+<form id="contactForm" name="contact" action="/php/contact.php" method="POST" class="space-y-4">
+    <div id="formStatus" class="hidden">
+        <p id="successMessage" class="text-green-600 p-4 bg-green-50 rounded-md mb-4 hidden">
+            Thank you for your message. We will get back to you soon.
+        </p>
+        <p id="errorMessage" class="text-red-600 p-4 bg-red-50 rounded-md mb-4 hidden">
+            Sorry, there was a problem sending your message. Please try again.
+        </p>
     </div>
     <div class="input">
-        <input type="text" placeholder="Email" name="mail" class="p-4 bg-gray-200 border border-gray-200 focus:outline-none focus:bg-white focus:border-gray-500" required>
+        <input type="text" placeholder="Name" name="name" class="w-full p-4 bg-gray-200 border border-gray-200 focus:outline-none focus:bg-white focus:border-gray-500" required>
+    </div>
+    <div aria-hidden="true" style="position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important;">
+        <input type="text" name="phone" tabindex="-1" autocomplete="off">
+        <input type="text" name="surname" tabindex="-1" autocomplete="off">
+    </div>
+    <div class="input" style="display:none !important">
+        <input type="text" name="phone" tabindex="-1" autocomplete="off">
+        <input type="text" name="username" tabindex="-1" autocomplete="off">
     </div>
     <div class="input">
-        <input type="text" placeholder="Title" name="title" class="p-4 bg-gray-200 border border-gray-200 focus:outline-none focus:bg-white focus:border-gray-500" required>
+        <input type="email" placeholder="Email" name="email" class="w-full p-4 bg-gray-200 border border-gray-200 focus:outline-none focus:bg-white focus:border-gray-500" required>
     </div>
     <div class="input">
-        <textarea rows="5" cols="30" placeholder="Message" name="message" class="p-4 bg-gray-200 border border-gray-200 focus:outline-none focus:bg-white focus:border-gray-500" required></textarea>
+        <input type="text" placeholder="Subject" name="subject" class="w-full p-4 bg-gray-200 border border-gray-200 focus:outline-none focus:bg-white focus:border-gray-500" required>
     </div>
-    <input type="submit" value="Submit" class="px-8 py-2 duration-200 bg-gray-800 text-white cursor-pointer transition-colors hover:bg-gray-400">
+    <div class="input">
+        <textarea rows="5" placeholder="Message" name="message" class="w-full p-4 bg-gray-200 border border-gray-200 focus:outline-none focus:bg-white focus:border-gray-500" required></textarea>
+    </div>
+    <input type="hidden" name="csrf_token" id="csrfToken">
+    <input type="hidden" name="form_start" id="formStart">
+    <input type="hidden" name="captcha_solve" id="captchaSolve">
+    <div class="captcha-container p-4 bg-gray-50 rounded-md border border-gray-200">
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Verification</label>
+            <p id="captchaQuestion" class="mt-1 text-sm text-gray-500"></p>
+            <div id="captchaVisual" class="mt-2 flex gap-2"></div>
+        </div>
+        <div class="flex gap-2">
+            <div class="w-full">
+                <input
+                    type="text"
+                    id="captchaAnswer"
+                    class="w-full p-2 border rounded-md"
+                    placeholder="Enter your answer"
+                >
+                <p id="captchaError" class="text-red-600 text-sm mt-1 hidden">Incorrect answer. Please try again.</p>
+            </div>
+            <button
+                type="button"
+                id="refreshCaptcha"
+                class="px-4 py-2 text-sm bg-gray-200 rounded-md hover:bg-gray-300"
+            >↻</button>
+        </div>
+    </div>
+    <input type="hidden" name="token" id="formToken">
+    <button type="submit" id="submitButton" class="px-8 py-2 duration-200 bg-gray-800 text-white cursor-pointer transition-colors hover:bg-gray-400" disabled>
+        Send Message
+    </button>
 </form>
+
+<script>
+(function() {
+    let currentCaptcha = null;
+
+    function generateToken() {
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    function updateToken() {
+        const token = generateToken();
+        document.getElementById('csrfToken').value = token;
+        return token;
+    }
+
+    // Initialize token and timestamps
+    updateToken();
+    document.getElementById('formStart').value = Date.now().toString();
+    document.getElementById('captchaSolve').value = '';
+
+    function generateCaptcha() {
+        const challenges = [
+            () => {
+                const num1 = Math.floor(Math.random() * 10) + 1;
+                const num2 = Math.floor(Math.random() * 10) + 1;
+                return {
+                    question: `What is ${num1} + ${num2}?`,
+                    answer: String(num1 + num2)
+                };
+            },
+            () => {
+                const shapes = ['circles', 'squares', 'triangles'];
+                const count = Math.floor(Math.random() * 5) + 2;
+                const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                const visual = Array(count).fill(shape[0]).map(s => 
+                    s === 'c' ? '○' : s === 's' ? '□' : '△'
+                );
+                return {
+                    question: `How many ${shape} do you see?`,
+                    answer: String(count),
+                    visual: visual
+                };
+            }
+        ];
+
+        const challenge = challenges[Math.floor(Math.random() * challenges.length)]();
+        const questionEl = document.getElementById('captchaQuestion');
+        const visualEl = document.getElementById('captchaVisual');
+        const answerEl = document.getElementById('captchaAnswer');
+
+        questionEl.textContent = challenge.question;
+        visualEl.innerHTML = '';
+        if (challenge.visual) {
+            challenge.visual.forEach(shape => {
+                const span = document.createElement('span');
+                span.className = 'text-2xl';
+                span.textContent = shape;
+                visualEl.appendChild(span);
+            });
+        }
+        answerEl.value = '';
+        currentCaptcha = challenge;
+        document.getElementById('submitButton').disabled = true;
+    }
+
+    document.getElementById('captchaAnswer').addEventListener('input', function(e) {
+        const answer = e.target.value;
+        const isValid = answer === currentCaptcha.answer;
+        const errorElement = document.getElementById('captchaError');
+        
+        document.getElementById('submitButton').disabled = !isValid;
+        
+        if (answer.length > 0) {
+            errorElement.classList.toggle('hidden', isValid);
+            if (isValid && !document.getElementById('captchaSolve').value) {
+                document.getElementById('captchaSolve').value = Date.now().toString();
+            }
+        } else {
+            errorElement.classList.add('hidden');
+            document.getElementById('captchaSolve').value = '';
+        }
+    });
+
+    document.getElementById('refreshCaptcha').addEventListener('click', generateCaptcha);
+
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitButton = form.querySelector('button[type="submit"]');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const formStatus = document.getElementById('formStatus');
+
+        successMessage.classList.add('hidden');
+        errorMessage.classList.add('hidden');
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Sending...';
+
+        try {
+            console.log('Form data being sent:', Object.fromEntries(formData));
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+            console.log('Response received:', await response.clone().text());
+
+            const result = await response.json();
+            if (result.MessageID) {
+                formStatus.classList.remove('hidden');
+                successMessage.classList.remove('hidden');
+                form.reset();
+                function generateToken() {
+        return Array.from(crypto.getRandomValues(new Uint8Array(24)))
+            .map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    
+    function updateToken() {
+        const token = generateToken();
+        document.getElementById('formToken').value = token;
+        return token;
+    }
+
+    // Generate initial token
+    updateToken();
+    
+    generateCaptcha();
+            } else {
+                throw new Error(result.Message || 'Failed to send message');
+            }
+        } catch (error) {
+            formStatus.classList.remove('hidden');
+            errorMessage.classList.remove('hidden');
+            console.error('Error:', error);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Send Message';
+        }
+    });
+
+    generateCaptcha();
+})();
+</script>
