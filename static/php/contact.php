@@ -31,7 +31,7 @@ if (!empty($_POST['phone']) || !empty($_POST['surname'])) {
 }
 
 // Basic input validation
-$required_fields = ['name', 'email', 'subject', 'message'];
+$required_fields = ['name', 'email', 'phone_number', 'subject', 'message'];
 foreach ($required_fields as $field) {
     if (empty($_POST[$field])) {
         http_response_code(400);
@@ -57,6 +57,7 @@ if (empty($postmark_token)) {
 // Sanitize inputs
 $name = htmlspecialchars($_POST['name'], ENT_QUOTES, 'UTF-8');
 $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+$phone_number = htmlspecialchars($_POST['phone_number'], ENT_QUOTES, 'UTF-8');
 $subject = htmlspecialchars($_POST['subject'], ENT_QUOTES, 'UTF-8');
 $message = htmlspecialchars($_POST['message'], ENT_QUOTES, 'UTF-8');
 
@@ -68,6 +69,7 @@ $data = [
     'HtmlBody' => "
         <p><strong>Name:</strong> {$name}</p>
         <p><strong>Email:</strong> {$email}</p>
+        <p><strong>Phone Number:</strong> {$phone_number}</p>
         <p><strong>Subject:</strong> {$subject}</p>
         <p><strong>Message:</strong></p>
         <p>{$message}</p>
