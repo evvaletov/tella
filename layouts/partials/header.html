@@ -6,7 +6,7 @@
             <li class="p-2">
                 <a href="{{ .URL | safeURL }}" class="block">
                     <span>{{ .Name }}</span>
-                    <span class="ml-2">&#9662;</span> <!-- Down arrow for dropdown -->
+                    <span class="ml-2">▾</span> <!-- Down arrow for dropdown -->
                 </a>
                 <ul class="hidden mt-2 bg-white text-black">
                     {{ range .Children }}
@@ -29,9 +29,13 @@
         </ul>
     </div>
     <nav class="flex items-center justify-between flex-wrap bg-opacity-100 p-8">
-        <div class="flex items-center flex-shrink-0 text-xl text-grey-900 mr-6">
-            <a href="{{ .Site.BaseURL }}"><img alt="{{ .Site.Params.logo.alt }}"
-                                               class="{{ .Site.Params.logo.size }} mr-3" src="{{ .Site.Params.logo.main | relURL }}"></a>
+        <div class="flex items-center flex-shrink-0 mr-6">
+            <a href="{{ .Site.BaseURL }}" class="flex items-center">
+                <img alt="{{ .Site.Params.logo.alt }}"
+                     class="{{ .Site.Params.logo.size }} mr-6" 
+                     src="{{ .Site.Params.logo.main | relURL }}">
+                <span class="text-2xl text-black font-arial font-bold">{{ .Site.Params.site.name }}</span>
+            </a>
         </div>
         <div class="block lg:hidden">
             <div id="hamburgerbtn" class="flex cursor-pointer items-center w-14 h-10 py-2 rounded mopen">
@@ -49,7 +53,7 @@
                     <li class="relative group">
                         <a href="{{ .URL | safeURL }}" class="duration-200 block mt-4 lg:inline-block lg:mt-0 text-black hover:opacity-60 mr-8">
                             {{ .Name }}
-                            <span class="ml-1">&#9662;</span> <!-- Down arrow for dropdown -->
+                            <span class="ml-1">▾</span> <!-- Down arrow for dropdown -->
                         </a>
                         <ul class="absolute hidden group-hover:block bg-white shadow-lg mt-2 py-2 w-48">
                             {{ range .Children }}
